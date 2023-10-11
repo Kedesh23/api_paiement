@@ -19,24 +19,27 @@ app.get("/api/payement", (req, res) => {
     res.send("Bonjour, mon ami");
 });
 app.post("/api/payement/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    // Récupération des paramètres POST / téléphone, montant, opérateur, email
     try {
         const payer_msisdn = req.body.phone;
         const amount = parseFloat(req.body.montant);
         const payment_system_name = req.body.operateur;
         const payer_email = req.body.email;
         const short_description = "Paiement de la consultation";
-        // Génération d'un numéro unique => external_reference
         let external_reference = "0123456789";
-        // Création de la facture
         const result = yield (0, payment_function_1.CreateInvoice)({ payer_msisdn, short_description, amount, payer_email, external_reference });
-        res.send("success");
         console.log(result);
+        const bill_id = result.e_bill.bill_id;
+        const push = yield (0, payment_function_1.MakePushUSSD)({ payer_msisdn, bill_id, payment_system_name });
+        console.log(push);
+        // Répondre seulement une fois à la fin de la route
+        res.send("Facture générée et push USSD généré avec succès.");
     }
     catch (e) {
         console.log(e);
+        // En cas d'erreur, répondez avec un message d'erreur
+        // res.status(500).send("Une erreur s'est produite : " + e.message);
     }
 }));
 app.listen(PORT, () => {
-    console.log(`Serveur ouvert sur ${PORT}: `);
+    console.log(`Serveur ouvert sur ${PORT}`);
 });
